@@ -1,0 +1,216 @@
+version: '3.8'
+
+# Trio CRM — Supabase Self-Hosted (Docker Compose)
+#
+# Serviços: db, kong, auth, rest, realtime, storage, meta, studio
+#
+# Uso:
+#   docker compose up -d
+#   Aguardar ~30s para inicialização do PostgreSQL
+#   Acessar Supabase Studio: http://localhost:3001
+#   URL da API (Kong): http://localhost:8000
+#
+# ⚠️  ALTERE as senhas e secrets abaixo antes de usar em produção!
+#
+
+x-environment: &common-env
+  POSTGRES_HOST: db
+  POSTGRES_PORT: 5432
+  POSTGRES_DB: postgres
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: supabase_local_pw
+
+services:
+  # ─── PostgreSQL com extensões Supabase (pgvector, pg_cron, etc.) ──────
+  db:
+    image: supabase/postgres:15.8.1.060
+    container_name: trio_crm_db
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      <<: *common-env
+      JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
+      ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxOTU3MzQ1MjAwfQ.dc_X5iR_VP_qroQEqeq3oPsX7CRNe1t_XL0UxrAb_4Y"
+      SERVICE_ROLE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjQxNzY5MjAwLCJleHAiOjE5NTczNDUyMDB9.o_qBBa6EFGjnmXEiZSiDSIzdO_oxhjZBpFJ9gRMxJAg"
+    volumes:
+      - trio_crm_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres -h localhost
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # ─── Kong (API Gateway) — ponto de entrada unificado ──────────────────
+  kong:
+    image: kong:2.8.1
+    container_name: trio_crm_kong
+    restart: unless-stopped
+    ports:
+      - "8000:8000" # API HTTP
+      - "8443:8443" # API HTTPS (não configurado em dev)
+    environment:
+      KONG_DATABASE: "off"
+      KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
+      KONG_PLUGINS: "request-transformer,cors,key-auth,acl,basic-auth"
+    volumes:
+      - ./infra/supabase/kong.yml:/etc/kong/kong.yml:ro
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ─── GoTrue (Supabase Auth service) ───────────────────────────────────
+  auth:
+    image: supabase/gotrue:v2.164.0
+    container_name: trio_crm_auth
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: 9999
+      API_EXTERNAL_URL: http://localhost:8000
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: "postgresql://postgres:supabase_local_pw@db:5432/postgres?search_path=auth"
+      GOTRUE_SITE_URL: http://localhost:3000
+      GOTRUE_URI_ALLOW_LIST: "http://localhost:3000/**"
+      GOTRUE_DISABLE_SIGNUP: "false"
+      GOTRUE_JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
+      GOTRUE_JWT_ADMIN_ROLES: "service_role"
+      GOTRUE_JWT_AUD: "authenticated"
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: "authenticated"
+      GOTRUE_JWT_EXP: 3600
+      GOTRUE_JWT_ADMIN_AUD: "service_role"
+      GOTRUE_MAILER_AUTOCONFIRM: "true" # Desligar em produção e configurar SMTP
+      GOTRUE_LOG_LEVEL: debug
+
+  # ─── PostgREST (Auto REST API sobre o schema public) ──────────────────
+  rest:
+    image: postgrest/postgrest:v12.2.0
+    container_name: trio_crm_rest
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: "postgresql://postgres:supabase_local_pw@db:5432/postgres"
+      PGRST_DB_SCHEMAS: "public,storage,graphql_public"
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_DB_USE_LEGACY_GUCS: "false"
+      PGRST_JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
+      PGRST_APP_SETTINGS_JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
+      PGRST_APP_SETTINGS_JWT_EXP: 3600
+
+  # ─── Realtime (WebSocket para subscriptions) ──────────────────────────
+  realtime:
+    image: supabase/realtime:v2.31.0
+    container_name: trio_crm_realtime
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: supabase_local_pw
+      DB_NAME: postgres
+      DB_AFTER_CONNECT_QUERY: "SET search_path TO realtime"
+      DB_ENC_KEY: supabase_realtime_enc_key_change_me
+      API_JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
+      FLY_ALLOC_ID: fly1
+      FLY_APP_NAME: realtime
+      SECRET_KEY_BASE: supabase_realtime_secret_key_base_change_me
+      ERL_AFLAGS: "-proto_dist inet_tcp"
+      ENABLE_TAILSCALE: "false"
+      DNS_NODES: "''"
+    command: >
+      sh -c "/app/bin/migrate && /app/bin/realtime eval 'Realtime.Release.seeds(Realtime.Repo)' && /app/bin/server"
+
+  # ─── Storage (Supabase Storage API) ───────────────────────────────────
+  storage:
+    image: supabase/storage-api:v1.11.9
+    container_name: trio_crm_storage
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      rest:
+        condition: service_started
+    environment:
+      ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxOTU3MzQ1MjAwfQ.dc_X5iR_VP_qroQEqeq3oPsX7CRNe1t_XL0UxrAb_4Y"
+      SERVICE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjQxNzY5MjAwLCJleHAiOjE5NTczNDUyMDB9.o_qBBa6EFGjnmXEiZSiDSIzdO_oxhjZBpFJ9gRMxJAg"
+      POSTGREST_URL: http://rest:3000
+      PGRST_JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
+      DATABASE_URL: "postgresql://postgres:supabase_local_pw@db:5432/postgres"
+      FILE_SIZE_LIMIT: 52428800 # 50MB
+      STORAGE_BACKEND: file
+      FILE_STORAGE_BACKEND_PATH: /var/lib/storage
+      TENANT_ID: trio_crm
+      REGION: local
+      GLOBAL_S3_BUCKET: trio-crm-storage
+      IS_MULTITENANT: "false"
+    volumes:
+      - trio_crm_storage_data:/var/lib/storage
+
+  # ─── Meta (ImgProxy + Transformation) ─────────────────────────────────
+  imgproxy:
+    image: darthsim/imgproxy:v3.8.0
+    container_name: trio_crm_imgproxy
+    restart: unless-stopped
+    environment:
+      IMGPROXY_BIND: ":5001"
+      IMGPROXY_LOCAL_FILESYSTEM_ROOT: "/"
+      IMGPROXY_USE_ETAG: "true"
+      IMGPROXY_ENABLE_WEBP_DETECTION: "true"
+    volumes:
+      - trio_crm_storage_data:/var/lib/storage:ro
+
+  # ─── Supabase Studio (UI de administração) ────────────────────────────
+  studio:
+    image: supabase/studio:20241028-a265374
+    container_name: trio_crm_studio
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    environment:
+      HOSTNAME: 0.0.0.0
+      STUDIO_PG_META_URL: http://meta:8080
+      POSTGRES_PASSWORD: supabase_local_pw
+      DEFAULT_ORGANIZATION_NAME: "Rigueto"
+      DEFAULT_PROJECT_NAME: "Trio CRM"
+      SUPABASE_URL: http://kong:8000
+      SUPABASE_PUBLIC_URL: http://localhost:8000
+      SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxOTU3MzQ1MjAwfQ.dc_X5iR_VP_qroQEqeq3oPsX7CRNe1t_XL0UxrAb_4Y"
+      SUPABASE_SERVICE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjQxNzY5MjAwLCJleHAiOjE5NTczNDUyMDB9.o_qBBa6EFGjnmXEiZSiDSIzdO_oxhjZBpFJ9gRMxJAg"
+      LOGFLARE_API_KEY: "placeholder"
+      LOGFLARE_URL: http://analytics:4000
+      NEXT_PUBLIC_ENABLE_LOGS: "true"
+      NEXT_ANALYTICS_BACKEND_PROVIDER: postgres
+    depends_on:
+      meta:
+        condition: service_started
+
+  # ─── pg-meta (Metadata da banco para o Studio) ────────────────────────
+  meta:
+    image: supabase/postgres-meta:v0.84.2
+    container_name: trio_crm_meta
+    restart: unless-stopped
+    environment:
+      PG_META_PORT: 8080
+      PG_META_DB_HOST: db
+      PG_META_DB_PORT: 5432
+      PG_META_DB_NAME: postgres
+      PG_META_DB_USER: postgres
+      PG_META_DB_PASSWORD: supabase_local_pw
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  trio_crm_db_data:
+    driver: local
+  trio_crm_storage_data:
+    driver: local
