@@ -1,17 +1,6 @@
-version: '3.8'
-
-# Trio CRM — Supabase Self-Hosted (Docker Compose)
+# Trio CRM — Supabase Self-Hosted (Docker Compose via Easypanel)
 #
 # Serviços: db, kong, auth, rest, realtime, storage, meta, studio
-#
-# Uso:
-#   docker compose up -d
-#   Aguardar ~30s para inicialização do PostgreSQL
-#   Acessar Supabase Studio: http://localhost:3001
-#   URL da API (Kong): http://localhost:8000
-#
-# ⚠️  ALTERE as senhas e secrets abaixo antes de usar em produção!
-#
 
 x-environment: &common-env
   POSTGRES_HOST: db
@@ -23,11 +12,8 @@ x-environment: &common-env
 services:
   # ─── PostgreSQL com extensões Supabase (pgvector, pg_cron, etc.) ──────
   db:
-    image: supabase/postgres:15.8.1.060
-    container_name: trio_crm_db
+    image: supabase/postgres:15.1.0.147
     restart: unless-stopped
-    ports:
-      - "5432:5432"
     environment:
       <<: *common-env
       JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
@@ -36,33 +22,39 @@ services:
     volumes:
       - trio_crm_db_data:/var/lib/postgresql/data
     healthcheck:
-      test: pg_isready -U postgres -h localhost
-      interval: 5s
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
       timeout: 5s
-      retries: 10
+      retries: 12
 
   # ─── Kong (API Gateway) — ponto de entrada unificado ──────────────────
   kong:
     image: kong:2.8.1
-    container_name: trio_crm_kong
     restart: unless-stopped
-    ports:
-      - "8000:8000" # API HTTP
-      - "8443:8443" # API HTTPS (não configurado em dev)
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /etc/kong/kong.yml
       KONG_PLUGINS: "request-transformer,cors,key-auth,acl,basic-auth"
     volumes:
-      - ./infra/supabase/kong.yml:/etc/kong/kong.yml:ro
+      # Caminho relativo ajustado (considerando que o compose já está na pasta infra)
+      - ./supabase/kong.yml:/etc/kong/kong.yml:ro
     depends_on:
       db:
         condition: service_healthy
+    networks:
+      - default
+      - easypanel
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.trio-kong.rule=Host(`api.crm.rigueto.com.br`)
+      - traefik.http.routers.trio-kong.entrypoints=websecure
+      - traefik.http.routers.trio-kong.tls.certresolver=letsencrypt
+      - traefik.http.services.trio-kong.loadbalancer.server.port=8000
+      - traefik.docker.network=easypanel
 
   # ─── GoTrue (Supabase Auth service) ───────────────────────────────────
   auth:
     image: supabase/gotrue:v2.164.0
-    container_name: trio_crm_auth
     restart: unless-stopped
     depends_on:
       db:
@@ -70,11 +62,11 @@ services:
     environment:
       GOTRUE_API_HOST: 0.0.0.0
       GOTRUE_API_PORT: 9999
-      API_EXTERNAL_URL: http://localhost:8000
+      API_EXTERNAL_URL: https://api.crm.rigueto.com.br
       GOTRUE_DB_DRIVER: postgres
       GOTRUE_DB_DATABASE_URL: "postgresql://postgres:supabase_local_pw@db:5432/postgres?search_path=auth"
-      GOTRUE_SITE_URL: http://localhost:3000
-      GOTRUE_URI_ALLOW_LIST: "http://localhost:3000/**"
+      GOTRUE_SITE_URL: https://studio.crm.rigueto.com.br
+      GOTRUE_URI_ALLOW_LIST: "https://studio.crm.rigueto.com.br/**"
       GOTRUE_DISABLE_SIGNUP: "false"
       GOTRUE_JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
       GOTRUE_JWT_ADMIN_ROLES: "service_role"
@@ -82,13 +74,12 @@ services:
       GOTRUE_JWT_DEFAULT_GROUP_NAME: "authenticated"
       GOTRUE_JWT_EXP: 3600
       GOTRUE_JWT_ADMIN_AUD: "service_role"
-      GOTRUE_MAILER_AUTOCONFIRM: "true" # Desligar em produção e configurar SMTP
+      GOTRUE_MAILER_AUTOCONFIRM: "true"
       GOTRUE_LOG_LEVEL: debug
 
   # ─── PostgREST (Auto REST API sobre o schema public) ──────────────────
   rest:
     image: postgrest/postgrest:v12.2.0
-    container_name: trio_crm_rest
     restart: unless-stopped
     depends_on:
       db:
@@ -105,7 +96,6 @@ services:
   # ─── Realtime (WebSocket para subscriptions) ──────────────────────────
   realtime:
     image: supabase/realtime:v2.31.0
-    container_name: trio_crm_realtime
     restart: unless-stopped
     depends_on:
       db:
@@ -131,8 +121,7 @@ services:
 
   # ─── Storage (Supabase Storage API) ───────────────────────────────────
   storage:
-    image: supabase/storage-api:v1.11.9
-    container_name: trio_crm_storage
+    image: supabase/storage-api:v0.40.4
     restart: unless-stopped
     depends_on:
       db:
@@ -145,7 +134,7 @@ services:
       POSTGREST_URL: http://rest:3000
       PGRST_JWT_SECRET: "super-secret-jwt-token-trio-crm-2026"
       DATABASE_URL: "postgresql://postgres:supabase_local_pw@db:5432/postgres"
-      FILE_SIZE_LIMIT: 52428800 # 50MB
+      FILE_SIZE_LIMIT: 52428800
       STORAGE_BACKEND: file
       FILE_STORAGE_BACKEND_PATH: /var/lib/storage
       TENANT_ID: trio_crm
@@ -158,7 +147,6 @@ services:
   # ─── Meta (ImgProxy + Transformation) ─────────────────────────────────
   imgproxy:
     image: darthsim/imgproxy:v3.8.0
-    container_name: trio_crm_imgproxy
     restart: unless-stopped
     environment:
       IMGPROXY_BIND: ":5001"
@@ -171,10 +159,7 @@ services:
   # ─── Supabase Studio (UI de administração) ────────────────────────────
   studio:
     image: supabase/studio:20241028-a265374
-    container_name: trio_crm_studio
     restart: unless-stopped
-    ports:
-      - "3001:3000"
     environment:
       HOSTNAME: 0.0.0.0
       STUDIO_PG_META_URL: http://meta:8080
@@ -182,7 +167,7 @@ services:
       DEFAULT_ORGANIZATION_NAME: "Rigueto"
       DEFAULT_PROJECT_NAME: "Trio CRM"
       SUPABASE_URL: http://kong:8000
-      SUPABASE_PUBLIC_URL: http://localhost:8000
+      SUPABASE_PUBLIC_URL: https://api.crm.rigueto.com.br
       SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MTc2OTIwMCwiZXhwIjoxOTU3MzQ1MjAwfQ.dc_X5iR_VP_qroQEqeq3oPsX7CRNe1t_XL0UxrAb_4Y"
       SUPABASE_SERVICE_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoic2VydmljZV9yb2xlIiwiaWF0IjoxNjQxNzY5MjAwLCJleHAiOjE5NTczNDUyMDB9.o_qBBa6EFGjnmXEiZSiDSIzdO_oxhjZBpFJ9gRMxJAg"
       LOGFLARE_API_KEY: "placeholder"
@@ -192,11 +177,20 @@ services:
     depends_on:
       meta:
         condition: service_started
+    networks:
+      - default
+      - easypanel
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.trio-studio.rule=Host(`studio.crm.rigueto.com.br`)
+      - traefik.http.routers.trio-studio.entrypoints=websecure
+      - traefik.http.routers.trio-studio.tls.certresolver=letsencrypt
+      - traefik.http.services.trio-studio.loadbalancer.server.port=3000
+      - traefik.docker.network=easypanel
 
   # ─── pg-meta (Metadata da banco para o Studio) ────────────────────────
   meta:
     image: supabase/postgres-meta:v0.84.2
-    container_name: trio_crm_meta
     restart: unless-stopped
     environment:
       PG_META_PORT: 8080
@@ -214,3 +208,7 @@ volumes:
     driver: local
   trio_crm_storage_data:
     driver: local
+
+networks:
+  easypanel:
+    external: true
