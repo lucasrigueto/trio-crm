@@ -1,0 +1,15 @@
+{
+  "actions": {
+    "save": "Salvar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Excluir",
+    "search": "Buscar"
+  },
+  "states": {
+    "loading": "Carregando"
+  },
+  "contacts": {
+    "count": "{count, plural, =0 {Nenhum contato} =1 {1 contato} other {# contatos}}"
+  }
+}

@@ -1,5 +1,11 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import {
+  defaultLocale,
+  isLocale,
+  localeCookieMaxAge,
+  localeCookieName,
+} from '@/i18n/config'
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -42,6 +48,20 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
+  const withLocaleCookie = <T extends NextResponse>(response: T): T => {
+    if (!request.nextUrl.pathname.startsWith('/api/')) {
+      const cookieLocale = request.cookies.get(localeCookieName)?.value
+      if (!isLocale(cookieLocale)) {
+        response.cookies.set(localeCookieName, defaultLocale, {
+          maxAge: localeCookieMaxAge,
+          path: '/',
+          sameSite: 'lax',
+        })
+      }
+    }
+    return response
+  }
+
   // Auth pages - redirect to dashboard if already logged in.
   // Exception: when an invite token is in the query string we
   // send the already-signed-in user to /join/<token> instead so
@@ -66,7 +86,7 @@ export async function middleware(request: NextRequest) {
       url.pathname = '/dashboard'
       url.search = ''
     }
-    return withRefreshedCookies(NextResponse.redirect(url))
+    return withLocaleCookie(withRefreshedCookies(NextResponse.redirect(url)))
   }
 
   // Protected pages - redirect to login if not authenticated
@@ -74,7 +94,7 @@ export async function middleware(request: NextRequest) {
   if (!user && protectedPaths.some(path => request.nextUrl.pathname.startsWith(path))) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return withRefreshedCookies(NextResponse.redirect(url))
+    return withLocaleCookie(withRefreshedCookies(NextResponse.redirect(url)))
   }
 
   // API routes that need auth (not webhooks)
@@ -85,7 +105,7 @@ export async function middleware(request: NextRequest) {
     )
   }
 
-  return supabaseResponse
+  return withLocaleCookie(supabaseResponse)
 }
 
 export const config = {
