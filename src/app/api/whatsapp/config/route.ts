@@ -87,7 +87,7 @@ export async function GET() {
 
     const { data: config, error: configError } = await supabase
       .from('whatsapp_config')
-      .select('phone_number_id, access_token, status')
+      .select('phone_number_id, access_token, status, provider, evolution_api_url, evolution_api_key, evolution_instance_name')
       .eq('account_id', accountId)
       .maybeSingle()
 
@@ -110,6 +110,61 @@ export async function GET() {
       )
     }
 
+    // ── Evolution API flow ───────────────────────────────────────
+    if (config.provider === 'evolution') {
+      let evolutionApiKey: string | null = null
+      if (config.evolution_api_key) {
+        try {
+          evolutionApiKey = decrypt(config.evolution_api_key)
+        } catch (err) {
+          console.error('[whatsapp/config GET] Evolution API key decryption failed:', err)
+          return NextResponse.json(
+            {
+              connected: false,
+              reason: 'token_corrupted',
+              needs_reset: true,
+              message:
+                'The stored Evolution API key cannot be decrypted with the current ENCRYPTION_KEY.',
+            },
+            { status: 200 },
+          )
+        }
+      }
+
+      // Basic connectivity test to Evolution API
+      try {
+        const response = await fetch(`${config.evolution_api_url}/instance/fetchInstances`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: evolutionApiKey || '',
+          },
+        })
+        if (!response.ok) {
+          throw new Error(`Evolution API returned ${response.status}`)
+        }
+        return NextResponse.json({
+          connected: true,
+          provider: 'evolution',
+          evolution_instance_name: config.evolution_instance_name,
+          evolution_api_url: config.evolution_api_url,
+          evolution_api_key: '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022',
+        })
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown Evolution API error'
+        console.error('[whatsapp/config GET] Evolution API connectivity test failed:', message)
+        return NextResponse.json(
+          {
+            connected: false,
+            reason: 'evolution_api_error',
+            message: `Evolution API connectivity test failed: ${message}`,
+          },
+          { status: 200 },
+        )
+      }
+    }
+
+    // ── Meta (WhatsApp Business API) flow ────────────────────────
     // Try to decrypt the stored token with the current ENCRYPTION_KEY.
     // If this fails, the key changed (or was never consistent across envs).
     let accessToken: string
@@ -185,7 +240,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json()
-    const { phone_number_id, waba_id, access_token, verify_token, pin } = body
+    const {
+      phone_number_id, waba_id, access_token, verify_token, pin,
+      provider = 'meta',
+      evolution_api_url, evolution_api_key, evolution_instance_name,
+    } = body
 
     if (!access_token || !phone_number_id) {
       return NextResponse.json(
@@ -202,6 +261,120 @@ export async function POST(request: Request) {
         )
       }
     }
+
+    // ── Evolution API flow ───────────────────────────────────────
+    if (provider === 'evolution') {
+      if (!evolution_api_url || !evolution_instance_name) {
+        return NextResponse.json(
+          { error: 'evolution_api_url and evolution_instance_name are required for Evolution provider' },
+          { status: 400 },
+        )
+      }
+
+      // Encrypt the Evolution API key (same as Meta access_token)
+      let encryptedEvolutionApiKey: string | null = null
+      if (evolution_api_key) {
+        try {
+          encryptedEvolutionApiKey = encrypt(evolution_api_key)
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Unknown encryption error'
+          console.error('Evolution API key encryption failed:', message)
+          return NextResponse.json(
+            {
+              error:
+                'Failed to encrypt Evolution API key. Check that ENCRYPTION_KEY is a valid 64-character hex string.',
+            },
+            { status: 500 },
+          )
+        }
+      }
+
+      // Basic connectivity test to Evolution API
+      try {
+        const testResponse = await fetch(`${evolution_api_url}/instance/fetchInstances`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: evolution_api_key || '',
+          },
+        })
+        if (!testResponse.ok) {
+          throw new Error(`Evolution API returned ${testResponse.status}`)
+        }
+      } catch (err) {
+        const message = err instanceof Error ? err.message : 'Unknown Evolution API error'
+        console.error('Evolution API connectivity test failed during save:', message)
+        return NextResponse.json(
+          { error: `Evolution API connectivity test failed: ${message}` },
+          { status: 400 },
+        )
+      }
+
+      const baseRow = {
+        phone_number_id: null,
+        waba_id: null,
+        access_token: null,
+        verify_token: null,
+        provider: 'evolution',
+        evolution_api_url,
+        evolution_api_key: encryptedEvolutionApiKey,
+        evolution_instance_name,
+        status: 'connected',
+        connected_at: new Date().toISOString(),
+        registered_at: null,
+        subscribed_apps_at: null,
+        last_registration_error: null,
+        updated_at: new Date().toISOString(),
+      }
+
+      const { data: existing } = await supabase
+        .from('whatsapp_config')
+        .select('id')
+        .eq('account_id', accountId)
+        .maybeSingle()
+
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from('whatsapp_config')
+          .update(baseRow)
+          .eq('account_id', accountId)
+
+        if (updateError) {
+          console.error('Error updating whatsapp_config (Evolution):', updateError)
+          return NextResponse.json(
+            { error: 'Failed to update configuration' },
+            { status: 500 },
+          )
+        }
+      } else {
+        const { error: insertError } = await supabase
+          .from('whatsapp_config')
+          .insert({
+            account_id: accountId,
+            user_id: user.id,
+            ...baseRow,
+          })
+
+        if (insertError) {
+          console.error('Error inserting whatsapp_config (Evolution):', insertError)
+          return NextResponse.json(
+            { error: 'Failed to save configuration' },
+            { status: 500 },
+          )
+        }
+      }
+
+      return NextResponse.json({
+        success: true,
+        saved: true,
+        provider: 'evolution',
+        evolution_instance_name,
+        evolution_api_url,
+        evolution_api_key: '\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022',
+      })
+    }
+
+    // ── Meta (WhatsApp Business API) flow continues below ────────
 
     // Reject if another account has already claimed this phone_number_id.
     // wacrm is single-tenant-per-WhatsApp-number — letting two accounts
@@ -358,6 +531,10 @@ export async function POST(request: Request) {
       waba_id: waba_id || null,
       access_token: encryptedAccessToken,
       verify_token: encryptedVerifyToken,
+      provider: 'meta',
+      evolution_api_url: null,
+      evolution_api_key: null,
+      evolution_instance_name: null,
       status: registrationError ? 'disconnected' : 'connected',
       connected_at: registrationError ? null : new Date().toISOString(),
       registered_at: registrationError ? null : registeredAt,

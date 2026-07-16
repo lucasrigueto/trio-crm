@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -16,6 +16,8 @@ import { FieldsAndTagsPanel } from '@/components/settings/fields-and-tags-panel'
 import { DealsSettings } from '@/components/settings/deals-settings';
 import { MembersTab } from '@/components/settings/members-tab';
 import { ApiKeysSettings } from '@/components/settings/api-keys-settings';
+import { AiConfig } from '@/components/settings/ai-config';
+import { AiKnowledgeCard } from '@/components/settings/ai-knowledge';
 import {
   resolveSection,
   type SettingsSection,
@@ -24,8 +26,20 @@ import {
 export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { defaultCurrency } = useAuth();
+  const { defaultCurrency, accountId, canEditSettings } = useAuth();
   const { mode } = useTheme();
+
+  const [hasEmbeddingsKey, setHasEmbeddingsKey] = useState(false);
+  const loadedAccountIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!accountId || loadedAccountIdRef.current === accountId) return;
+    loadedAccountIdRef.current = accountId;
+    fetch('/api/ai/config')
+      .then((r) => r.json())
+      .then((d) => setHasEmbeddingsKey(Boolean(d.has_embeddings_key)))
+      .catch(() => {});
+  }, [accountId]);
 
   // The URL (`?tab=`) is the single source of truth for the active
   // section — deep-linkable, and it keeps the existing links in the
@@ -56,6 +70,14 @@ export default function SettingsPage() {
     security: <SecurityPanel />,
     appearance: <AppearancePanel />,
     whatsapp: <WhatsAppConfig />,
+    ai: <AiConfig />,
+    knowledge: (
+      <AiKnowledgeCard
+        accountId={accountId}
+        canEdit={canEditSettings}
+        hasEmbeddingsKey={hasEmbeddingsKey}
+      />
+    ),
     templates: <TemplateManager />,
     fields: <FieldsAndTagsPanel />,
     deals: <DealsSettings />,

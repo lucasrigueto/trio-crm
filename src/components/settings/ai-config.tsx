@@ -477,7 +477,7 @@ export function AiConfig() {
           )}
 
           <Button onClick={handleSave} disabled={disabled}>
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             Save
           </Button>
         </div>

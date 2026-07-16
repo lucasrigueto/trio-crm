@@ -6,7 +6,7 @@
 // Given a conversation and message params, this:
 //   1. validates the params for the message type,
 //   2. loads the conversation + contact + WhatsApp config,
-//   3. sends to Meta (with phone-variant retry + contact auto-fix),
+//   3. routes to the configured provider (Meta or Evolution),
 //   4. persists the message + updates the conversation,
 //   5. pauses any active Flow run for the contact (agent stepped in).
 //
@@ -27,6 +27,7 @@ import {
   sendMediaMessage,
   type MediaKind,
 } from '@/lib/whatsapp/meta-api';
+import { evolutionSendText, evolutionSendMedia } from '@/lib/whatsapp/evolution-api';
 import { decrypt, encrypt, isLegacyFormat } from '@/lib/whatsapp/encryption';
 import { supabaseAdmin } from '@/lib/flows/admin-client';
 import {
@@ -35,7 +36,7 @@ import {
   phoneVariants,
   isRecipientNotAllowedError,
 } from '@/lib/whatsapp/phone-utils';
-import type { MessageTemplate } from '@/types';
+import type { MessageTemplate, WhatsAppConfig } from '@/types';
 import { isMessageTemplate } from '@/lib/whatsapp/template-row-guard';
 
 export const MEDIA_KINDS = ['image', 'video', 'document', 'audio'] as const;
@@ -159,6 +160,52 @@ export function validateSendMessageParams(params: {
   }
 }
 
+/**
+ * Route a single outbound message through the Evolution API.
+ */
+async function sendViaEvolution(
+  config: WhatsAppConfig,
+  phone: string,
+  messageType: string,
+  payload: { text?: string; mediaUrl?: string; filename?: string }
+): Promise<{ messageId: string }> {
+  const apiUrl = config.evolution_api_url!;
+  const apiKey = config.evolution_api_key!;
+  const instanceName = config.evolution_instance_name!;
+
+  if (messageType === 'text') {
+    const result = await evolutionSendText({
+      apiUrl,
+      apiKey,
+      instanceName,
+      to: phone,
+      text: payload.text!,
+    });
+    return result;
+  }
+
+  const mediaKinds = ['image', 'video', 'document', 'audio'] as const;
+  if ((mediaKinds as readonly string[]).includes(messageType)) {
+    const result = await evolutionSendMedia({
+      apiUrl,
+      apiKey,
+      instanceName,
+      to: phone,
+      mediaUrl: payload.mediaUrl!,
+      mediaType: messageType as 'image' | 'video' | 'document' | 'audio',
+      caption: payload.text || undefined,
+      filename: payload.filename || undefined,
+    });
+    return result;
+  }
+
+  throw new SendMessageError(
+    'bad_request',
+    `Evolution API does not support message type "${messageType}"`,
+    400
+  );
+}
+
 export async function sendMessageToConversation(
   db: SupabaseClient,
   accountId: string,
@@ -251,6 +298,77 @@ export async function sendMessageToConversation(
         }
       });
   }
+
+  // ── Evolution API fast-path ─────────────────────────────────────
+  if (config.provider === 'evolution') {
+    const { messageId: waMessageId } = await sendViaEvolution(
+      config,
+      sanitizedPhone,
+      messageType,
+      { text: contentText || undefined, mediaUrl: mediaUrl || undefined, filename: filename || undefined }
+    );
+
+    const { data: messageRecord, error: msgError } = await db
+      .from('messages')
+      .insert({
+        conversation_id: conversationId,
+        sender_type: 'agent',
+        content_type: messageType,
+        content_text: contentText || null,
+        media_url: mediaUrl || null,
+        template_name: templateName || null,
+        message_id: waMessageId,
+        status: 'sent',
+        reply_to_message_id: replyToMessageId || null,
+      })
+      .select()
+      .single();
+
+    if (msgError) {
+      console.error('[send-message] error inserting sent message:', msgError);
+      throw new SendMessageError(
+        'db_error',
+        `Message sent via Evolution but failed to save to DB: ${msgError.message}`,
+        500
+      );
+    }
+
+    await db
+      .from('conversations')
+      .update({
+        last_message_text: contentText || `[${messageType}]`,
+        last_message_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', conversationId);
+
+    // Pause any active Flow run for this contact — the agent stepping in
+    // is the strongest "yield, human is here" signal. Best-effort.
+    try {
+      const { error: pauseErr } = await supabaseAdmin()
+        .from('flow_runs')
+        .update({
+          status: 'paused_by_agent',
+          ended_at: new Date().toISOString(),
+          end_reason: 'agent_replied',
+        })
+        .eq('account_id', accountId)
+        .eq('contact_id', contact.id)
+        .eq('status', 'active');
+      if (pauseErr) {
+        console.error('[flows] pause-on-agent-send failed:', pauseErr.message);
+      }
+    } catch (err) {
+      console.error(
+        '[flows] pause-on-agent-send threw:',
+        err instanceof Error ? err.message : err
+      );
+    }
+
+    return { messageId: messageRecord.id, whatsappMessageId: waMessageId };
+  }
+
+  // ── Meta API path (default) ────────────────────────────────────
 
   // Resolve the reply target to its Meta message_id. The parent must
   // belong to this same conversation — otherwise a caller could quote

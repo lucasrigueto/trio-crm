@@ -233,10 +233,15 @@ export interface MessageReaction {
 export interface WhatsAppConfig {
   id: string;
   user_id: string;
-  phone_number_id: string;
+  account_id: string;
+  provider: 'meta' | 'evolution';
+  phone_number_id: string | null;
   waba_id?: string;
-  access_token: string;
+  access_token: string | null;
   verify_token?: string;
+  evolution_api_url: string | null;
+  evolution_api_key: string | null;
+  evolution_instance_name: string | null;
   status: 'connected' | 'disconnected';
   connected_at?: string;
   /**
@@ -413,7 +418,8 @@ export type AutomationStepType =
   | 'wait'
   | 'condition'
   | 'send_webhook'
-  | 'close_conversation';
+  | 'close_conversation'
+  | 'send_notification';
 
 export type AutomationLogStatus = 'success' | 'partial' | 'failed';
 
@@ -504,6 +510,13 @@ export interface SendWebhookStepConfig {
   body_template?: string;
 }
 
+export interface SendNotificationStepConfig {
+  user_id: string;
+  title: string;
+  body?: string;
+  type?: string;
+}
+
 export type AutomationStepConfig =
   | SendMessageStepConfig
   | SendTemplateStepConfig
@@ -514,6 +527,7 @@ export type AutomationStepConfig =
   | WaitStepConfig
   | ConditionStepConfig
   | SendWebhookStepConfig
+  | SendNotificationStepConfig
   | Record<string, never>
   | Record<string, unknown>;
 

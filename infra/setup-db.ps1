@@ -35,7 +35,10 @@ do {
             Write-Host "     ✓ PostgreSQL pronto!" -ForegroundColor Green
             break
         }
-    } catch { }
+    }
+    catch {
+        Write-Host "     Tentativa falhou, aguardando..."
+    }
     
     if ($attempt -ge $maxAttempts) {
         Write-Error "PostgreSQL não ficou pronto em $($maxAttempts * 2) segundos."

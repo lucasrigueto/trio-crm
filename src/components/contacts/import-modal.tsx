@@ -636,7 +636,7 @@ export function ImportModal({
               onClick={handleImport}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              {importing && <Loader2 className="size-4 animate-spin" />}
+              {importing ? <Loader2 className="size-4 animate-spin" /> : null}
               Import {parsedRows.length > 0 ? parsedRows.length : ''} contact
               {parsedRows.length !== 1 ? 's' : ''}
             </Button>

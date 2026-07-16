@@ -6,6 +6,7 @@ import type {
   ConditionStepConfig,
   KeywordMatchTriggerConfig,
   SendMessageStepConfig,
+  SendNotificationStepConfig,
   SendTemplateStepConfig,
   SendWebhookStepConfig,
   TagStepConfig,
@@ -425,15 +426,14 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
       if (!args.contactId) throw new Error('assign_conversation needs a contact')
       let agentId = cfg.agent_id
       if (cfg.mode === 'round_robin') {
-        // Pick any member of the account. The existing implementation
-        // only ever returned the automation's author; preserving that
-        // shape until a real round-robin algorithm replaces it.
-        const { data: profiles } = await db
-          .from('profiles')
-          .select('user_id')
-          .eq('account_id', args.automation.account_id)
-          .limit(1)
-        agentId = profiles?.[0]?.user_id
+        const { data: rbAgentId, error: rbErr } = await db.rpc('get_next_round_robin_agent', {
+          p_account_id: args.automation.account_id,
+        })
+        if (rbErr || !rbAgentId) {
+          console.error('[Automation] Round-robin failed:', rbErr)
+          return 'nenhum agente disponível'
+        }
+        agentId = rbAgentId
       }
       if (!agentId) return 'no agent resolved'
       await db
@@ -545,6 +545,35 @@ async function runStep(step: AutomationStep, args: ExecuteArgs): Promise<string>
         .eq('account_id', args.automation.account_id)
         .eq('contact_id', args.contactId)
       return 'conversation closed'
+    }
+
+    case 'send_notification': {
+      const cfg = step.step_config as SendNotificationStepConfig
+      let recipientId = cfg.user_id
+      if (recipientId === 'assigned_agent' && args.context.conversation_id) {
+        const { data: conv } = await db
+          .from('conversations')
+          .select('assigned_agent_id')
+          .eq('id', args.context.conversation_id)
+          .single()
+        recipientId = conv?.assigned_agent_id
+      }
+      if (!recipientId) throw new Error('send_notification: recipient not found')
+      const { error } = await db.from('notifications').insert({
+        account_id: args.automation.account_id,
+        user_id: recipientId,
+        type: cfg.type || 'automation_event',
+        conversation_id: args.context.conversation_id || null,
+        contact_id: args.contactId || null,
+        actor_user_id: args.automation.user_id,
+        title: cfg.title,
+        body: cfg.body || null,
+      })
+      if (error) {
+        console.error('[Automation] Failed to send notification:', error)
+        throw new Error(`send_notification failed: ${error.message}`)
+      }
+      return `notification sent to ${recipientId}`
     }
 
     default:

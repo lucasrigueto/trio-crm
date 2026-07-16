@@ -27,6 +27,7 @@ import {
   Webhook,
   CircleSlash,
   Zap,
+  Bell,
   Loader2,
   ArrowDown,
   ArrowUp,
@@ -99,6 +100,7 @@ const STEP_META: Record<AutomationStepType, StepMeta> = {
   condition: { label: "Condition (If/Else)", icon: GitBranch, border: "border-l-amber-500" },
   send_webhook: { label: "Send Webhook", icon: Webhook, border: "border-l-primary" },
   close_conversation: { label: "Close Conversation", icon: CircleSlash, border: "border-l-primary" },
+  send_notification: { label: "Send Notification", icon: Bell, border: "border-purple-500/30" },
 }
 
 const ADDABLE_STEPS: AutomationStepType[] = [
@@ -113,6 +115,7 @@ const ADDABLE_STEPS: AutomationStepType[] = [
   "condition",
   "send_webhook",
   "close_conversation",
+  "send_notification",
 ]
 
 const TRIGGER_OPTIONS: { value: AutomationTriggerType; label: string; hint: string }[] = [

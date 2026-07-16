@@ -103,12 +103,21 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
         step_type: 'assign_conversation',
         step_config: { mode: 'round_robin' },
       },
+      {
+        step_type: 'send_notification',
+        step_config: {
+          user_id: 'assigned_agent',
+          title: 'Novo lead qualificado atribuído',
+          body: 'Um lead qualificado foi atribuído a você via rodízio. Verifique a conversa.',
+          type: 'automation_event',
+        },
+      },
     ],
   },
   follow_up_reminder: {
     slug: 'follow_up_reminder',
     name: 'Follow-up Reminder',
-    description: 'Send a nudge if a contact has not replied within 24 hours.',
+    description: 'Automatically follow up with contacts who haven\'t replied, with notifications to the assigned agent.',
     trigger_type: 'new_message_received',
     trigger_config: {},
     steps: [
@@ -117,11 +126,59 @@ export const AUTOMATION_TEMPLATES: Record<TemplateSlug, AutomationTemplateDefini
         step_config: { amount: 1, unit: 'days' },
       },
       {
+        step_type: 'condition',
+        step_config: {
+          subject: 'message_content',
+          operand: '',
+          value: '',
+        },
+      },
+      {
+        step_type: 'send_notification',
+        step_config: {
+          user_id: 'assigned_agent',
+          title: 'Lead respondeu após follow-up',
+          body: 'O lead respondeu à sua mensagem. Verifique a conversa.',
+          type: 'follow_up_due',
+        },
+        branch: 'yes',
+        parent_index: 1,
+      },
+      {
         step_type: 'send_message',
         step_config: {
-          text:
-            "Just circling back — did you have any other questions for us? Happy to help!",
+          text: 'Olá! Passando para verificar se conseguiu ver minha mensagem anterior. Posso ajudar com alguma dúvida?',
         },
+        branch: 'no',
+        parent_index: 1,
+      },
+      {
+        step_type: 'send_notification',
+        step_config: {
+          user_id: 'assigned_agent',
+          title: 'Follow-up automático enviado',
+          body: 'Um follow-up automático foi enviado para o lead.',
+          type: 'automation_event',
+        },
+        branch: 'no',
+        parent_index: 1,
+      },
+      {
+        step_type: 'wait',
+        step_config: { amount: 3, unit: 'days' },
+        branch: 'no',
+        parent_index: 1,
+      },
+      {
+        step_type: 'send_notification',
+        step_config: {
+          user_id: 'assigned_agent',
+          title: 'Lead frio — sem resposta há 3 dias',
+          body: 'O lead não respondeu ao follow-up. Considere entrar em contato diretamente.',
+          type: 'follow_up_due',
+        },
+        branch: 'no',
+        parent_index: 1,
       },
     ],
   },

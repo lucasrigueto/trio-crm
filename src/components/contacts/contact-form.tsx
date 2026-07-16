@@ -377,7 +377,7 @@ export function ContactForm({
               disabled={saving || checkingDup || (!isEdit && !!dupMatch?.exact)}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
-              {saving && <Loader2 className="size-4 animate-spin" />}
+              {saving ? <Loader2 className="size-4 animate-spin" /> : null}
               {isEdit ? 'Update' : 'Create'}
             </Button>
           </DialogFooter>

@@ -248,7 +248,7 @@ export function AiKnowledgeCard({
                     Cancel
                   </Button>
                   <Button onClick={save} disabled={saving}>
-                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Save document
                   </Button>
                 </div>

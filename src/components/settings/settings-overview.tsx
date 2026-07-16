@@ -47,6 +47,8 @@ export function SettingsOverview({
   // from blanking the rest of the landing.
   const [whatsapp, setWhatsapp] = useState<WhatsAppStatus | null>(null);
   const [whatsappLoading, setWhatsappLoading] = useState(true);
+  const [aiStatus, setAiStatus] = useState<{ configured: boolean; enabled: boolean } | null>(null);
+  const [aiLoading, setAiLoading] = useState(true);
 
   useEffect(() => {
     if (!user || !accountId) return;
@@ -132,6 +134,22 @@ export function SettingsOverview({
       setWhatsappLoading(false);
     })();
 
+    // AI status — cheap check
+    (async () => {
+      setAiLoading(true);
+      const { data } = await supabase
+        .from('ai_configs')
+        .select('is_active, auto_reply_enabled')
+        .eq('account_id', acctId)
+        .maybeSingle();
+      if (cancelled) return;
+      setAiStatus({
+        configured: !!data,
+        enabled: !!(data?.is_active && data?.auto_reply_enabled),
+      });
+      setAiLoading(false);
+    })();
+
     return () => {
       cancelled = true;
     };
@@ -166,6 +184,21 @@ export function SettingsOverview({
       ) : (
         <>
           <StatusDot tone="muted" /> Needs reconnecting
+        </>
+      ),
+    },
+    {
+      section: 'ai',
+      loading: aiLoading,
+      subtitle: !aiStatus?.configured ? (
+        'Not configured'
+      ) : aiStatus.enabled ? (
+        <>
+          <StatusDot tone="ok" /> Active
+        </>
+      ) : (
+        <>
+          <StatusDot tone="muted" /> Disabled
         </>
       ),
     },

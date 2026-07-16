@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { decrypt, encrypt, isLegacyFormat } from '@/lib/whatsapp/encryption'
 import { getMediaUrl, downloadMedia } from '@/lib/whatsapp/meta-api'
 import { normalizePhone } from '@/lib/whatsapp/phone-utils'
+import { isEvolutionWebhookPayload, extractPhoneFromJid, extractMessageText, type EvolutionWebhookPayload } from '@/lib/whatsapp/evolution-api'
 import { findExistingContact, isUniqueViolation } from '@/lib/contacts/dedupe'
 import { verifyMetaWebhookSignature } from '@/lib/whatsapp/webhook-signature'
 import { runAutomationsForTrigger } from '@/lib/automations/engine'
@@ -215,7 +216,13 @@ export async function POST(request: Request) {
   return NextResponse.json({ status: 'received' }, { status: 200 })
 }
 
-async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
+async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] } | EvolutionWebhookPayload) {
+  // Evolution API webhook — different payload structure
+  if (isEvolutionWebhookPayload(body)) {
+    await processEvolutionWebhook(body)
+    return
+  }
+
   if (!body.entry) return
 
   for (const entry of body.entry) {
@@ -305,6 +312,152 @@ async function processWebhook(body: { entry?: WhatsAppWebhookEntry[] }) {
       }
     }
   }
+}
+
+async function processEvolutionWebhook(payload: EvolutionWebhookPayload) {
+  const { instance, event, data } = payload
+
+  // Only process incoming messages — ignore connection updates, presence, etc.
+  if (event !== 'messages.upsert') return
+
+  // Skip messages sent by the bot itself
+  if (data.key.fromMe) return
+
+  const rawPhone = extractPhoneFromJid(data.key.remoteJid)
+  if (!rawPhone) {
+    console.warn('[evolution] could not extract phone from Jid:', data.key.remoteJid)
+    return
+  }
+  const phone = normalizePhone(rawPhone)
+  const text = extractMessageText(payload)
+  const contactName = data.pushName || phone
+
+  // Find whatsapp_config by evolution_instance_name
+  const { data: configRows, error: configError } = await supabaseAdmin()
+    .from('whatsapp_config')
+    .select('*')
+    .eq('evolution_instance_name', instance)
+
+  if (configError) {
+    console.error('[evolution] error fetching config for instance:', instance, configError)
+    return
+  }
+
+  if (!configRows || configRows.length === 0) {
+    console.warn('[evolution] no whatsapp_config found for instance:', instance)
+    return
+  }
+
+  if (configRows.length > 1) {
+    console.error(
+      `[evolution] multiple configs (${configRows.length}) found for instance:`,
+      instance,
+      '— message dropped.'
+    )
+    return
+  }
+
+  const config = configRows[0]
+  const accountId = config.account_id
+  const configOwnerUserId = config.user_id
+
+  // Find or create contact
+  const contactOutcome = await findOrCreateContact(accountId, configOwnerUserId, phone, contactName)
+  if (!contactOutcome) return
+  const contactRecord = contactOutcome.contact
+
+  // Find or create conversation
+  const convResult = await findOrCreateConversation(accountId, configOwnerUserId, contactRecord.id)
+  if (!convResult) return
+  const conversation = convResult.conversation
+
+  if (convResult.created) {
+    await dispatchWebhookEvent(supabaseAdmin(), accountId, 'conversation.created', {
+      conversation_id: conversation.id,
+      contact_id: contactRecord.id,
+    })
+  }
+
+  // Insert message
+  const { error: msgError } = await supabaseAdmin().from('messages').insert({
+    conversation_id: conversation.id,
+    sender_type: 'customer',
+    content_type: 'text',
+    content_text: text || null,
+    message_id: data.key.id,
+    status: 'delivered',
+    whatsapp_message_id: data.key.id,
+  })
+
+  if (msgError) {
+    console.error('[evolution] error inserting message:', msgError)
+    return
+  }
+
+  // Update conversation
+  const { error: convError } = await supabaseAdmin()
+    .from('conversations')
+    .update({
+      last_message_text: text || '[media]',
+      last_message_at: new Date().toISOString(),
+      unread_count: (conversation.unread_count || 0) + 1,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', conversation.id)
+
+  if (convError) {
+    console.error('[evolution] error updating conversation:', convError)
+  }
+
+  // Check if this is the first inbound message
+  const { count: priorCustomerMsgCount } = await supabaseAdmin()
+    .from('messages')
+    .select('id', { count: 'exact', head: true })
+    .eq('conversation_id', conversation.id)
+    .eq('sender_type', 'customer')
+  const isFirstInboundMessage = (priorCustomerMsgCount ?? 0) === 0
+
+  // Dispatch automation triggers
+  const automationTriggers: (
+    | 'new_contact_created'
+    | 'first_inbound_message'
+    | 'new_message_received'
+    | 'keyword_match'
+  )[] = ['new_message_received', 'keyword_match']
+
+  if (contactOutcome.wasCreated) automationTriggers.unshift('new_contact_created')
+  if (isFirstInboundMessage) automationTriggers.unshift('first_inbound_message')
+
+  for (const triggerType of automationTriggers) {
+    runAutomationsForTrigger({
+      accountId,
+      triggerType,
+      contactId: contactRecord.id,
+      context: {
+        message_text: text || '',
+        conversation_id: conversation.id,
+      },
+    }).catch((err) => console.error('[automations] dispatch failed:', err))
+  }
+
+  // AI auto-reply
+  if (text && text.trim()) {
+    await dispatchInboundToAiReply({
+      accountId,
+      conversationId: conversation.id,
+      contactId: contactRecord.id,
+      configOwnerUserId,
+    })
+  }
+
+  // Webhook event
+  await dispatchWebhookEvent(supabaseAdmin(), accountId, 'message.received', {
+    conversation_id: conversation.id,
+    contact_id: contactRecord.id,
+    whatsapp_message_id: data.key.id,
+    content_type: 'text',
+    text,
+  })
 }
 
 // The happy-path status ladder — pending → sent → delivered → read →

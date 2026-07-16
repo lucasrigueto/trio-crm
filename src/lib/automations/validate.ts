@@ -135,6 +135,14 @@ function validateOne(step: StepLike, path: string, issues: ValidationIssue[]): v
     case 'close_conversation':
       // No config required.
       break
+    case 'send_notification':
+      if (!nonEmpty(c.user_id)) {
+        issues.push({ path: `${path}.user_id`, message: 'user_id is required' })
+      }
+      if (!nonEmpty(c.title)) {
+        issues.push({ path: `${path}.title`, message: 'title is required' })
+      }
+      break
     default:
       issues.push({ path, message: `unknown step type: ${step.step_type}` })
   }
