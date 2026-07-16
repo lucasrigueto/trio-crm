@@ -1,0 +1,34 @@
+{
+  "productName": "Trio CRM",
+  "primary": "Primary",
+  "closeMenu": "Close menu",
+  "openMenu": "Open menu",
+  "betaFeature": "Beta feature",
+  "beta": "Beta",
+  "unreadConversations": "{count, plural, =1 {1 unread conversation} other {# unread conversations}}",
+  "unreadNotifications": "{count, plural, =1 {1 unread notification} other {# unread notifications}}",
+  "items": {
+    "dashboard": "Dashboard",
+    "inbox": "Inbox",
+    "notifications": "Notifications",
+    "contacts": "Contacts",
+    "pipelines": "Pipelines",
+    "broadcasts": "Broadcasts",
+    "automations": "Automations",
+    "flows": "Flows",
+    "aiAgents": "AI Agents",
+    "settings": "Settings",
+    "profile": "Profile",
+    "signOut": "Sign out"
+  },
+  "roles": {
+    "owner": "Owner",
+    "admin": "Admin",
+    "agent": "Agent",
+    "viewer": "Viewer"
+  },
+  "account": {
+    "avatarAlt": "Avatar",
+    "fallbackUser": "User"
+  }
+}

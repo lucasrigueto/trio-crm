@@ -4,10 +4,18 @@
     "cancel": "Cancel",
     "confirm": "Confirm",
     "delete": "Delete",
-    "search": "Search"
+    "search": "Search",
+    "close": "Close",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "edit": "Edit",
+    "create": "Create",
+    "filter": "Filter"
   },
   "states": {
-    "loading": "Loading"
+    "loading": "Loading",
+    "loadingWithEllipsis": "Loading..."
   },
   "contacts": {
     "count": "{count, plural, =0 {No contacts} =1 {1 contact} other {# contacts}}"

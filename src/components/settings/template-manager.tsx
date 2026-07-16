@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'sonner';
@@ -133,7 +133,7 @@ export function TemplateManager() {
   const [submitting, setSubmitting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [form, setForm] = useState<TemplateFormData>(emptyForm);
-  // Non-null when the dialog is editing an existing row — switches the
+  // Non-null when the dialog is editing an existing row â€” switches the
   // submit handler from POST /submit to PATCH /[id] and changes the
   // dialog title + CTA. Set to the template id to pre-fill from a row.
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -149,7 +149,7 @@ export function TemplateManager() {
   const [uploadingHeader, setUploadingHeader] = useState(false);
   const headerFileRef = useRef<HTMLInputElement>(null);
 
-  // Body variable indices — `[1, 2, 3]` for "{{1}} {{2}} {{3}}". We
+  // Body variable indices â€” `[1, 2, 3]` for "{{1}} {{2}} {{3}}". We
   // re-run the extractor on every render to keep the sample-value rows
   // in sync with what the user typed.
   const bodyVarCount = useMemo(
@@ -276,17 +276,17 @@ export function TemplateManager() {
           data?.error || `${isEdit ? 'Edit' : 'Submit'} failed (HTTP ${res.status})`,
         );
       }
-      // Refresh first, then close — re-opening the dialog
+      // Refresh first, then close â€” re-opening the dialog
       // immediately should not show a stale list.
       if (user) await fetchTemplates(user.id);
       toast.success(
         data.dry_run
           ? isEdit
-            ? 'Template updated (dry-run — no Meta call)'
-            : 'Template saved (dry-run — no Meta call)'
+            ? 'Template updated (dry-run â€” no Meta call)'
+            : 'Template saved (dry-run â€” no Meta call)'
           : isEdit
-            ? 'Edit submitted — Meta typically reviews within 24 hours.'
-            : 'Submitted to Meta — typical review time is 24 hours. Status updates automatically.',
+            ? 'Edit submitted â€” Meta typically reviews within 24 hours.'
+            : 'Submitted to Meta â€” typical review time is 24 hours. Status updates automatically.',
       );
       setDialogOpen(false);
       setForm(emptyForm);
@@ -325,10 +325,10 @@ export function TemplateManager() {
       }
       if (data.truncated) {
         // Use error (not warning) so the message survives long
-        // enough to read — sonner's `warning` auto-dismisses on
+        // enough to read â€” sonner's `warning` auto-dismisses on
         // the same short timer as `success`.
         toast.error(
-          'Synced the first 2000 templates only — your account has more. Sync again to continue, or contact support if this persists.',
+          'Synced the first 2000 templates only â€” your account has more. Sync again to continue, or contact support if this persists.',
           { duration: 10000 },
         );
       }
@@ -463,7 +463,7 @@ export function TemplateManager() {
     }
     if (file.size > MEDIA_MAX_BYTES_BY_KIND.image) {
       toast.error(
-        `Image is ${(file.size / 1024 / 1024).toFixed(1)} MB — Meta's limit is 5 MB.`,
+        `Image is ${(file.size / 1024 / 1024).toFixed(1)} MB â€” Meta's limit is 5 MB.`,
       );
       return;
     }
@@ -495,7 +495,7 @@ export function TemplateManager() {
               title="Pull approved templates from your Meta WhatsApp Business Account"
             >
               <RefreshCw className={`size-4 ${syncing ? 'animate-spin' : ''}`} />
-              {syncing ? 'Syncing…' : 'Sync from Meta'}
+              {syncing ? 'Syncingâ€¦' : 'Sync from Meta'}
             </Button>
             <Button onClick={openCreate}>
               <Plus className="size-4" />
@@ -576,7 +576,7 @@ export function TemplateManager() {
                         variant="ghost"
                         size="sm"
                         onClick={() => openEdit(template)}
-                        title="Editing triggers Meta re-review — status flips to PENDING."
+                        title="Editing triggers Meta re-review â€” status flips to PENDING."
                         aria-label="Edit template"
                         className="text-muted-foreground hover:text-primary hover:bg-primary/10 h-8 px-2"
                       >
@@ -674,7 +674,7 @@ export function TemplateManager() {
               />
               <p className="text-[11px] text-muted-foreground">
                 {editingId
-                  ? 'Name is fixed once a template exists on Meta — create a new template to change it.'
+                  ? 'Name is fixed once a template exists on Meta â€” create a new template to change it.'
                   : 'Lowercase letters, digits, and underscores only.'}
               </p>
             </div>
@@ -730,7 +730,7 @@ export function TemplateManager() {
                     ? 'Language is fixed once a template exists on Meta.'
                     : (
                         <>
-                          Must match the exact code on Meta — <code>en_US</code>{' '}
+                          Must match the exact code on Meta â€” <code>en_US</code>{' '}
                           and <code>en</code> are distinct.
                         </>
                       )}
@@ -747,7 +747,7 @@ export function TemplateManager() {
                   // header_sample across format switches. The submit
                   // payload builder only reads the field that matches
                   // the active format, so an orphan value on a hidden
-                  // field is harmless — and keeping it lets the user
+                  // field is harmless â€” and keeping it lets the user
                   // switch formats to compare without losing typing.
                   setForm({
                     ...form,
@@ -831,12 +831,12 @@ export function TemplateManager() {
                         Upload image
                       </Button>
                       <span className="text-[11px] text-muted-foreground">
-                        JPEG or PNG, ≤5 MB
+                        JPEG or PNG, â‰¤5 MB
                       </span>
                     </div>
                   )}
                   <Input
-                    placeholder={`https://… (or paste a public ${form.header_format} link)`}
+                    placeholder={`https://â€¦ (or paste a public ${form.header_format} link)`}
                     value={form.header_media_url}
                     onChange={(e) =>
                       setForm({ ...form, header_media_url: e.target.value })
@@ -853,12 +853,12 @@ export function TemplateManager() {
                   )}
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
                     {form.header_format === 'image'
-                      ? 'Upload a JPEG/PNG (≤5 MB, ≥800×418 px recommended) or paste a public HTTPS link — we upload it to Meta for review automatically.'
+                      ? 'Upload a JPEG/PNG (â‰¤5 MB, â‰¥800Ã—418 px recommended) or paste a public HTTPS link â€” we upload it to Meta for review automatically.'
                       : 'Must be a publicly accessible HTTPS link. Meta fetches it once during review, so it needs to stay live for ~24 hrs.'}
                     {form.header_format === 'video' &&
-                      ' Recommended: MP4 / 3GPP, ≤16 MB, ≤60 seconds.'}
+                      ' Recommended: MP4 / 3GPP, â‰¤16 MB, â‰¤60 seconds.'}
                     {form.header_format === 'document' &&
-                      ' Recommended: PDF, ≤100 MB.'}
+                      ' Recommended: PDF, â‰¤100 MB.'}
                   </p>
                 </div>
               )}
@@ -1073,7 +1073,7 @@ export function TemplateManager() {
               {submitting ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  {editingId ? 'Saving…' : 'Submitting…'}
+                  {editingId ? 'Savingâ€¦' : 'Submittingâ€¦'}
                 </>
               ) : editingId ? (
                 'Save & Resubmit'
@@ -1099,8 +1099,8 @@ export function TemplateManager() {
             <DialogTitle className="text-popover-foreground">Delete template?</DialogTitle>
             <DialogDescription className="text-muted-foreground">
               {templateToDelete?.meta_template_id
-                ? `"${templateToDelete?.name}" will be deleted from Meta and from wacrm. Active broadcasts using this template will start failing on their next send. This can't be undone.`
-                : `"${templateToDelete?.name}" will be deleted from wacrm. It was never submitted to Meta, so no remote cleanup is needed.`}
+                ? `"${templateToDelete?.name}" will be deleted from Meta and from Trio CRM. Active broadcasts using this template will start failing on their next send. This can't be undone.`
+                : `"${templateToDelete?.name}" will be deleted from Trio CRM. It was never submitted to Meta, so no remote cleanup is needed.`}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="bg-popover border-border">
@@ -1120,7 +1120,7 @@ export function TemplateManager() {
               {deletingId !== null ? (
                 <>
                   <Loader2 className="size-4 animate-spin" />
-                  Deleting…
+                  Deletingâ€¦
                 </>
               ) : (
                 'Delete'
@@ -1132,3 +1132,5 @@ export function TemplateManager() {
     </section>
   );
 }
+
+
