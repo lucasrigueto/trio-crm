@@ -1,0 +1,70 @@
+{
+  "page": {
+    "title": "Dashboard",
+    "description": "Indicadores ao vivo de conversas, contatos, negócios, disparos e automações."
+  },
+  "metrics": {
+    "activeConversations": "Conversas ativas",
+    "newContactsToday": "Novos contatos hoje",
+    "openDealsValue": "Valor em negócios abertos",
+    "messagesSentToday": "Mensagens enviadas hoje",
+    "newTodayVsYesterday": "novas hoje vs. ontem",
+    "vsYesterday": "vs. ontem",
+    "noChange": "Sem mudança {suffix}",
+    "openDeals": "{count, plural, =1 {1 negócio aberto} other {# negócios abertos}}"
+  },
+  "quickActions": {
+    "newContact": "Novo contato",
+    "newDeal": "Novo negócio",
+    "newBroadcast": "Novo disparo",
+    "newAutomation": "Nova automação"
+  },
+  "conversationsChart": {
+    "title": "Conversas ao longo do tempo",
+    "description": "Volume diário de mensagens por direção",
+    "days": "{count} dias",
+    "emptyTitle": "Nenhuma atividade de mensagem neste período",
+    "emptyHint": "Envie ou receba mensagens para começar a preencher este gráfico.",
+    "ariaLabel": "Conversas por dia",
+    "incoming": "Recebidas",
+    "outgoing": "Enviadas",
+    "incomingCount": "{count} recebidas",
+    "outgoingCount": "{count} enviadas"
+  },
+  "pipeline": {
+    "title": "Valor do funil",
+    "description": "Negócios abertos por etapa",
+    "emptyTitle": "Ainda não há negócios abertos",
+    "emptyHint": "Crie negócios em Funis para ver a distribuição por etapa aqui.",
+    "dealCount": "{count, plural, =1 {1 negócio} other {# negócios}}",
+    "ariaLabel": "Valor do funil por etapa",
+    "total": "Total"
+  },
+  "responseTime": {
+    "category": "Média em minutos",
+    "title": "Tempo médio da primeira resposta",
+    "description": "Minutos para responder à primeira mensagem pendente do cliente, por dia da semana",
+    "target": "meta {minutes}m",
+    "thisWeek": "Esta semana:",
+    "lastWeek": "Semana passada:",
+    "emptyTitle": "Nenhuma resposta registrada ainda",
+    "emptyHint": "Este gráfico é preenchido conforme você responde mensagens de clientes."
+  },
+  "activity": {
+    "title": "Atividade recente",
+    "viewAll": "Ver tudo ->",
+    "emptyTitle": "Nenhuma atividade ainda",
+    "emptyHint": "Atividades de mensagens, negócios, disparos e automações aparecerão aqui.",
+    "showing": "Mostrando {visible} de {total}{plus}",
+    "show": "Mostrar",
+    "timeAgo": {
+      "seconds": "há {count}s",
+      "minutes": "há {count}min",
+      "hours": "há {count}h",
+      "days": "há {count}d"
+    }
+  },
+  "emptyState": {
+    "defaultTitle": "Ainda não há dados suficientes"
+  }
+}

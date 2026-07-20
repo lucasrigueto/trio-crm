@@ -1,16 +1,22 @@
 import { defaultLocale, type AppLocale } from "./config";
 import enUSAuth from "../../messages/en-US/auth.json";
 import enUSCommon from "../../messages/en-US/common.json";
+import enUSDashboard from "../../messages/en-US/dashboard.json";
+import enUSInbox from "../../messages/en-US/inbox.json";
 import enUSNavigation from "../../messages/en-US/navigation.json";
 import enUSSettings from "../../messages/en-US/settings.json";
 import ptBRAuth from "../../messages/pt-BR/auth.json";
 import ptBRCommon from "../../messages/pt-BR/common.json";
+import ptBRDashboard from "../../messages/pt-BR/dashboard.json";
+import ptBRInbox from "../../messages/pt-BR/inbox.json";
 import ptBRNavigation from "../../messages/pt-BR/navigation.json";
 import ptBRSettings from "../../messages/pt-BR/settings.json";
 
 const enUSMessages = {
   auth: enUSAuth,
   common: enUSCommon,
+  dashboard: enUSDashboard,
+  inbox: enUSInbox,
   navigation: enUSNavigation,
   settings: enUSSettings,
 };
@@ -46,6 +52,8 @@ export const messagesByLocale = {
   "pt-BR": mergeMessages(enUSMessages, {
     auth: ptBRAuth,
     common: ptBRCommon,
+    dashboard: ptBRDashboard,
+    inbox: ptBRInbox,
     navigation: ptBRNavigation,
     settings: ptBRSettings,
   }),

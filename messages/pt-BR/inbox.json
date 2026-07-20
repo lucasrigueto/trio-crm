@@ -1,0 +1,75 @@
+{
+  "page": {
+    "whatsappDisconnected": "WhatsApp® não está conectado. Acesse Configurações para conectar sua conta."
+  },
+  "list": {
+    "searchPlaceholder": "Buscar conversas...",
+    "filters": {
+      "all": "Todas",
+      "unread": "Não lidas",
+      "open": "Abertas",
+      "pending": "Pendentes",
+      "closed": "Fechadas"
+    },
+    "tags": "Tags",
+    "company": "Empresa",
+    "allCompanies": "Todas as empresas",
+    "tagFallback": "Tag",
+    "clearAll": "Limpar tudo",
+    "empty": "Nenhuma conversa encontrada",
+    "unknown": "Desconhecido",
+    "noMessages": "Nenhuma mensagem ainda"
+  },
+  "thread": {
+    "today": "Hoje",
+    "yesterday": "Ontem",
+    "customer": "Cliente",
+    "you": "Você",
+    "session": {
+      "noCustomerMessages": "Nenhuma mensagem do cliente",
+      "expired": "Expirada",
+      "hoursRemaining": "{count}h restantes",
+      "minutesRemaining": "{count}min restantes"
+    },
+    "status": {
+      "open": "Aberta",
+      "pending": "Pendente",
+      "closed": "Fechada",
+      "fallback": "Status"
+    },
+    "assignment": {
+      "assigned": "Atribuída",
+      "assign": "Atribuir",
+      "noTeammates": "Nenhum colega disponível",
+      "me": "eu",
+      "unassign": "Remover atribuição"
+    },
+    "emptyTitle": "Selecione uma conversa",
+    "emptyHint": "Escolha uma conversa à esquerda para começar a responder",
+    "backToConversations": "Voltar para conversas",
+    "hideContactPanel": "Ocultar painel do contato",
+    "showContactPanel": "Mostrar painel do contato",
+    "hideContact": "Ocultar contato",
+    "showContact": "Mostrar contato",
+    "refreshConversation": "Atualizar conversa",
+    "refresh": "Atualizar",
+    "noMessagesTitle": "Nenhuma mensagem ainda",
+    "noMessagesHint": "Envie um template para iniciar a conversa",
+    "errors": {
+      "failedToSend": "Falha ao enviar: {reason}",
+      "failedToSendTemplate": "Falha ao enviar template: {reason}",
+      "waitForSend": "Aguarde a mensagem terminar de ser enviada",
+      "reactionFailed": "Falha na reação: {reason}",
+      "failedToUpdateAssignment": "Falha ao atualizar atribuição"
+    }
+  },
+  "sidebar": {
+    "selectConversation": "Selecione uma conversa",
+    "tags": "Tags",
+    "noTags": "Nenhuma tag",
+    "activeDeals": "Negócios ativos",
+    "noDeals": "Nenhum negócio",
+    "notes": "Notas",
+    "addNotePlaceholder": "Adicionar uma nota..."
+  }
+}

@@ -1,0 +1,75 @@
+{
+  "page": {
+    "whatsappDisconnected": "WhatsApp® is not connected. Go to Settings to connect your account."
+  },
+  "list": {
+    "searchPlaceholder": "Search conversations...",
+    "filters": {
+      "all": "All",
+      "unread": "Unread",
+      "open": "Open",
+      "pending": "Pending",
+      "closed": "Closed"
+    },
+    "tags": "Tags",
+    "company": "Company",
+    "allCompanies": "All companies",
+    "tagFallback": "Tag",
+    "clearAll": "Clear all",
+    "empty": "No conversations found",
+    "unknown": "Unknown",
+    "noMessages": "No messages yet"
+  },
+  "thread": {
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "customer": "Customer",
+    "you": "You",
+    "session": {
+      "noCustomerMessages": "No customer messages",
+      "expired": "Expired",
+      "hoursRemaining": "{count}h remaining",
+      "minutesRemaining": "{count}m remaining"
+    },
+    "status": {
+      "open": "Open",
+      "pending": "Pending",
+      "closed": "Closed",
+      "fallback": "Status"
+    },
+    "assignment": {
+      "assigned": "Assigned",
+      "assign": "Assign",
+      "noTeammates": "No teammates available",
+      "me": "me",
+      "unassign": "Unassign"
+    },
+    "emptyTitle": "Select a conversation",
+    "emptyHint": "Choose a conversation from the left to start messaging",
+    "backToConversations": "Back to conversations",
+    "hideContactPanel": "Hide contact panel",
+    "showContactPanel": "Show contact panel",
+    "hideContact": "Hide contact",
+    "showContact": "Show contact",
+    "refreshConversation": "Refresh conversation",
+    "refresh": "Refresh",
+    "noMessagesTitle": "No messages yet",
+    "noMessagesHint": "Send a template to start the conversation",
+    "errors": {
+      "failedToSend": "Failed to send: {reason}",
+      "failedToSendTemplate": "Failed to send template: {reason}",
+      "waitForSend": "Wait for the message to finish sending",
+      "reactionFailed": "Reaction failed: {reason}",
+      "failedToUpdateAssignment": "Failed to update assignment"
+    }
+  },
+  "sidebar": {
+    "selectConversation": "Select a conversation",
+    "tags": "Tags",
+    "noTags": "No tags",
+    "activeDeals": "Active Deals",
+    "noDeals": "No deals",
+    "notes": "Notes",
+    "addNotePlaceholder": "Add a note..."
+  }
+}
