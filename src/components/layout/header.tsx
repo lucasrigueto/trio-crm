@@ -17,6 +17,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LocaleSwitcher } from "@/components/layout/locale-switcher";
 import { ModeToggle } from "@/components/layout/mode-toggle";
 
 const pageTitleKeys: Record<string, Parameters<ReturnType<typeof useTranslations<"navigation.items">>>[0]> = {
@@ -73,6 +74,7 @@ export function Header({ onOpenSidebar }: HeaderProps) {
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
+        <LocaleSwitcher />
         <ModeToggle />
 
         <DropdownMenu>

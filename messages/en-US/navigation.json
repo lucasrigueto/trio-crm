@@ -7,6 +7,13 @@
   "beta": "Beta",
   "unreadConversations": "{count, plural, =1 {1 unread conversation} other {# unread conversations}}",
   "unreadNotifications": "{count, plural, =1 {1 unread notification} other {# unread notifications}}",
+  "language": {
+    "label": "Language",
+    "current": "Current language: {locale}",
+    "switchTo": "Switch to {locale}",
+    "ptBR": "Portuguese",
+    "enUS": "English"
+  },
   "items": {
     "dashboard": "Dashboard",
     "inbox": "Inbox",
