@@ -4,12 +4,14 @@ import enUSCommon from "../../messages/en-US/common.json";
 import enUSDashboard from "../../messages/en-US/dashboard.json";
 import enUSInbox from "../../messages/en-US/inbox.json";
 import enUSNavigation from "../../messages/en-US/navigation.json";
+import enUSPages from "../../messages/en-US/pages.json";
 import enUSSettings from "../../messages/en-US/settings.json";
 import ptBRAuth from "../../messages/pt-BR/auth.json";
 import ptBRCommon from "../../messages/pt-BR/common.json";
 import ptBRDashboard from "../../messages/pt-BR/dashboard.json";
 import ptBRInbox from "../../messages/pt-BR/inbox.json";
 import ptBRNavigation from "../../messages/pt-BR/navigation.json";
+import ptBRPages from "../../messages/pt-BR/pages.json";
 import ptBRSettings from "../../messages/pt-BR/settings.json";
 
 const enUSMessages = {
@@ -18,6 +20,7 @@ const enUSMessages = {
   dashboard: enUSDashboard,
   inbox: enUSInbox,
   navigation: enUSNavigation,
+  pages: enUSPages,
   settings: enUSSettings,
 };
 
@@ -55,6 +58,7 @@ export const messagesByLocale = {
     dashboard: ptBRDashboard,
     inbox: ptBRInbox,
     navigation: ptBRNavigation,
+    pages: ptBRPages,
     settings: ptBRSettings,
   }),
   "en-US": {

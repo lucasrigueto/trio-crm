@@ -1,0 +1,182 @@
+{
+  "common": {
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "clear": "Clear",
+    "clearAll": "Clear all",
+    "creating": "Creating..."
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "Conversations other teammates assign to you show up here.",
+    "markAllRead": "Mark all as read",
+    "emptyTitle": "No notifications yet",
+    "emptyHint": "You'll see an alert here when someone assigns you a conversation.",
+    "unread": "Unread",
+    "errors": {
+      "markRead": "Failed to mark notification as read",
+      "markAllRead": "Failed to mark all as read"
+    }
+  },
+  "contacts": {
+    "title": "Contacts",
+    "description": "Manage your contact list.",
+    "total": "{count, plural, =1 {1 total contact.} other {# total contacts.}}",
+    "customFields": "Custom fields",
+    "import": "Import",
+    "addContact": "Add Contact",
+    "searchPlaceholder": "Search by name, phone, or email...",
+    "filterByTags": "Filter by tags",
+    "noTags": "No tags yet.",
+    "selected": "{count, plural, =1 {1 contact selected} other {# contacts selected}}",
+    "deleteSelected": "Delete selected",
+    "columns": {
+      "name": "Name",
+      "phone": "Phone",
+      "email": "Email",
+      "company": "Company",
+      "tags": "Tags",
+      "created": "Created"
+    },
+    "loading": "Loading contacts...",
+    "emptyFiltered": "No contacts match your filters.",
+    "empty": "No contacts yet.",
+    "addFirst": "Add your first contact",
+    "unnamed": "Unnamed",
+    "selectAll": "Select all contacts on this page",
+    "selectOne": "Select {name}",
+    "removeFilter": "Remove {name} filter",
+    "showing": "Showing {from}-{to} of {total}",
+    "pageOf": "Page {page} of {totalPages}",
+    "deleteContactTitle": "Delete Contact",
+    "deleteContactsTitle": "{count, plural, =1 {Delete 1 Contact} other {Delete # Contacts}}",
+    "deleteConfirm": "Are you sure you want to delete {name}? This action cannot be undone.",
+    "deleteBulkConfirm": "Are you sure you want to delete {count, plural, =1 {1 contact} other {# contacts}}? This action cannot be undone.",
+    "errors": {
+      "load": "Failed to load contacts",
+      "delete": "Failed to delete contact",
+      "deleteMany": "Failed to delete contacts"
+    },
+    "success": {
+      "deleted": "Contact deleted",
+      "deletedMany": "{count, plural, =1 {1 contact deleted} other {# contacts deleted}}"
+    }
+  },
+  "broadcasts": {
+    "title": "Broadcasts",
+    "description": "Send bulk messages to your contacts using approved templates.",
+    "new": "New Broadcast",
+    "emptyTitle": "No broadcasts yet",
+    "emptyHint": "Create your first broadcast to reach your contacts at scale.",
+    "progress": "Broadcast in progress",
+    "columns": {
+      "name": "Name",
+      "template": "Template",
+      "recipients": "Recipients",
+      "delivery": "Delivery",
+      "read": "Read",
+      "status": "Status",
+      "date": "Date"
+    },
+    "errors": {
+      "load": "Failed to load broadcasts"
+    }
+  },
+  "automations": {
+    "title": "Automations",
+    "description": "Build workflows that react to WhatsApp® events automatically.",
+    "create": "Create Automation",
+    "templates": "Quick-start templates",
+    "emptyTitle": "No automations yet",
+    "emptyHint": "Pick a template above or create one from scratch.",
+    "deleteTitle": "Delete automation",
+    "deleteDescription": "This permanently removes {name} and its execution history. This cannot be undone.",
+    "active": "active",
+    "runs": "{count, plural, =1 {1 run} other {# runs}}",
+    "last": "last {time}",
+    "openMenu": "Open menu",
+    "duplicate": "Duplicate",
+    "viewLogs": "View Logs",
+    "deactivate": "Deactivate",
+    "activate": "Activate",
+    "errors": {
+      "load": "Failed to load automations",
+      "update": "Failed to update",
+      "duplicate": "Failed to duplicate",
+      "delete": "Failed to delete"
+    },
+    "success": {
+      "activated": "Automation activated",
+      "paused": "Automation paused",
+      "duplicated": "Automation duplicated",
+      "deleted": "Automation deleted"
+    }
+  },
+  "pipelines": {
+    "select": "Select Pipeline",
+    "emptyMenu": "No pipelines yet",
+    "manage": "Manage Pipelines",
+    "addPipeline": "Add Pipeline",
+    "addDeal": "Add Deal",
+    "emptyTitle": "No pipelines yet",
+    "emptyHint": "Create a pipeline to start tracking deals",
+    "createPipeline": "Create Pipeline",
+    "newPipeline": "New Pipeline",
+    "pipelineName": "Pipeline Name",
+    "pipelinePlaceholder": "e.g., Enterprise Sales",
+    "defaultStages": "Default stages (New Lead -> Won) will be created automatically.",
+    "errors": {
+      "moveDeal": "Failed to move deal",
+      "profileAccount": "Your profile is not linked to an account.",
+      "create": "Failed to create pipeline"
+    },
+    "success": {
+      "created": "Pipeline created"
+    }
+  },
+  "flows": {
+    "title": "Flows",
+    "beta": "Beta",
+    "description": "Build branching, button-driven WhatsApp conversations. Useful for menus, FAQs, and triage before a human steps in.",
+    "new": "New flow",
+    "loadError": "Couldn't load flows.",
+    "createError": "Couldn't create flow.",
+    "deleteSuccess": "Flow deleted.",
+    "deleteError": "Couldn't delete flow.",
+    "deleteConfirm": "Delete \"{name}\"? Any active runs will end immediately.",
+    "createTitle": "Create a new flow",
+    "createDescription": "Start from a template or build from scratch.",
+    "startTemplate": "Start from a template",
+    "nodeCount": "{count, plural, =1 {1 node} other {# nodes}}",
+    "startBlank": "Or start blank",
+    "namePlaceholder": "e.g. Welcome menu",
+    "createBlank": "Create blank flow",
+    "emptyTitle": "No flows yet",
+    "emptyHint": "Build your first conversation: a welcome menu, an order lookup, an FAQ bot. Customers tap buttons; the bot routes them to the right answer or the right agent.",
+    "createFirst": "Create your first flow",
+    "statuses": {
+      "draft": "Draft",
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "runs": "{count, plural, =1 {1 run} other {# runs}}",
+    "triggers": {
+      "keywordNone": "Triggers on keyword (none set)",
+      "keywordList": "Triggers on: {keywords}",
+      "firstInbound": "Triggers on a contact's first-ever inbound message",
+      "manual": "Manual trigger"
+    }
+  },
+  "agents": {
+    "title": "AI Agents",
+    "description": "Your bring-your-own-key AI agent: set it up, then test it in the playground before it replies to customers in the inbox.",
+    "playground": "Playground",
+    "setup": "Setup"
+  },
+  "settings": {
+    "title": "Settings",
+    "description": "Everything in one place: your account and your workspace. Pick a section to manage it."
+  }
+}

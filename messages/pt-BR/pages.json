@@ -1,0 +1,182 @@
+{
+  "common": {
+    "retry": "Tentar novamente",
+    "cancel": "Cancelar",
+    "delete": "Excluir",
+    "edit": "Editar",
+    "clear": "Limpar",
+    "clearAll": "Limpar tudo",
+    "creating": "Criando..."
+  },
+  "notifications": {
+    "title": "Notificações",
+    "description": "Conversas que outros membros atribuírem a você aparecem aqui.",
+    "markAllRead": "Marcar tudo como lido",
+    "emptyTitle": "Nenhuma notificação ainda",
+    "emptyHint": "Você verá um alerta aqui quando alguém atribuir uma conversa a você.",
+    "unread": "Não lida",
+    "errors": {
+      "markRead": "Falha ao marcar notificação como lida",
+      "markAllRead": "Falha ao marcar tudo como lido"
+    }
+  },
+  "contacts": {
+    "title": "Contatos",
+    "description": "Gerencie sua lista de contatos.",
+    "total": "{count, plural, =1 {1 contato no total.} other {# contatos no total.}}",
+    "customFields": "Campos personalizados",
+    "import": "Importar",
+    "addContact": "Adicionar contato",
+    "searchPlaceholder": "Buscar por nome, telefone ou e-mail...",
+    "filterByTags": "Filtrar por tags",
+    "noTags": "Nenhuma tag ainda.",
+    "selected": "{count, plural, =1 {1 contato selecionado} other {# contatos selecionados}}",
+    "deleteSelected": "Excluir selecionados",
+    "columns": {
+      "name": "Nome",
+      "phone": "Telefone",
+      "email": "E-mail",
+      "company": "Empresa",
+      "tags": "Tags",
+      "created": "Criado"
+    },
+    "loading": "Carregando contatos...",
+    "emptyFiltered": "Nenhum contato corresponde aos filtros.",
+    "empty": "Nenhum contato ainda.",
+    "addFirst": "Adicionar primeiro contato",
+    "unnamed": "Sem nome",
+    "selectAll": "Selecionar todos os contatos desta página",
+    "selectOne": "Selecionar {name}",
+    "removeFilter": "Remover filtro {name}",
+    "showing": "Mostrando {from}-{to} de {total}",
+    "pageOf": "Página {page} de {totalPages}",
+    "deleteContactTitle": "Excluir contato",
+    "deleteContactsTitle": "{count, plural, =1 {Excluir 1 contato} other {Excluir # contatos}}",
+    "deleteConfirm": "Tem certeza que deseja excluir {name}? Esta ação não pode ser desfeita.",
+    "deleteBulkConfirm": "Tem certeza que deseja excluir {count, plural, =1 {1 contato} other {# contatos}}? Esta ação não pode ser desfeita.",
+    "errors": {
+      "load": "Falha ao carregar contatos",
+      "delete": "Falha ao excluir contato",
+      "deleteMany": "Falha ao excluir contatos"
+    },
+    "success": {
+      "deleted": "Contato excluído",
+      "deletedMany": "{count, plural, =1 {1 contato excluído} other {# contatos excluídos}}"
+    }
+  },
+  "broadcasts": {
+    "title": "Disparos",
+    "description": "Envie mensagens em massa para seus contatos usando templates aprovados.",
+    "new": "Novo disparo",
+    "emptyTitle": "Nenhum disparo ainda",
+    "emptyHint": "Crie seu primeiro disparo para alcançar seus contatos em escala.",
+    "progress": "Disparo em andamento",
+    "columns": {
+      "name": "Nome",
+      "template": "Template",
+      "recipients": "Destinatários",
+      "delivery": "Entrega",
+      "read": "Leitura",
+      "status": "Status",
+      "date": "Data"
+    },
+    "errors": {
+      "load": "Falha ao carregar disparos"
+    }
+  },
+  "automations": {
+    "title": "Automações",
+    "description": "Crie fluxos que reagem automaticamente a eventos do WhatsApp®.",
+    "create": "Criar automação",
+    "templates": "Templates de início rápido",
+    "emptyTitle": "Nenhuma automação ainda",
+    "emptyHint": "Escolha um template acima ou crie uma do zero.",
+    "deleteTitle": "Excluir automação",
+    "deleteDescription": "Isso remove permanentemente {name} e seu histórico de execução. Esta ação não pode ser desfeita.",
+    "active": "ativa",
+    "runs": "{count, plural, =1 {1 execução} other {# execuções}}",
+    "last": "última {time}",
+    "openMenu": "Abrir menu",
+    "duplicate": "Duplicar",
+    "viewLogs": "Ver logs",
+    "deactivate": "Desativar",
+    "activate": "Ativar",
+    "errors": {
+      "load": "Falha ao carregar automações",
+      "update": "Falha ao atualizar",
+      "duplicate": "Falha ao duplicar",
+      "delete": "Falha ao excluir"
+    },
+    "success": {
+      "activated": "Automação ativada",
+      "paused": "Automação pausada",
+      "duplicated": "Automação duplicada",
+      "deleted": "Automação excluída"
+    }
+  },
+  "pipelines": {
+    "select": "Selecionar funil",
+    "emptyMenu": "Nenhum funil ainda",
+    "manage": "Gerenciar funis",
+    "addPipeline": "Adicionar funil",
+    "addDeal": "Adicionar negócio",
+    "emptyTitle": "Nenhum funil ainda",
+    "emptyHint": "Crie um funil para começar a acompanhar negócios",
+    "createPipeline": "Criar funil",
+    "newPipeline": "Novo funil",
+    "pipelineName": "Nome do funil",
+    "pipelinePlaceholder": "ex.: Vendas enterprise",
+    "defaultStages": "As etapas padrão (Novo lead -> Ganho) serão criadas automaticamente.",
+    "errors": {
+      "moveDeal": "Falha ao mover negócio",
+      "profileAccount": "Seu perfil não está vinculado a uma conta.",
+      "create": "Falha ao criar funil"
+    },
+    "success": {
+      "created": "Funil criado"
+    }
+  },
+  "flows": {
+    "title": "Fluxos",
+    "beta": "Beta",
+    "description": "Crie conversas ramificadas por botões no WhatsApp. Útil para menus, FAQs e triagem antes de uma pessoa assumir.",
+    "new": "Novo fluxo",
+    "loadError": "Não foi possível carregar os fluxos.",
+    "createError": "Não foi possível criar o fluxo.",
+    "deleteSuccess": "Fluxo excluído.",
+    "deleteError": "Não foi possível excluir o fluxo.",
+    "deleteConfirm": "Excluir \"{name}\"? Qualquer execução ativa será encerrada imediatamente.",
+    "createTitle": "Criar novo fluxo",
+    "createDescription": "Comece por um template ou crie do zero.",
+    "startTemplate": "Começar por um template",
+    "nodeCount": "{count, plural, =1 {1 nó} other {# nós}}",
+    "startBlank": "Ou começar em branco",
+    "namePlaceholder": "ex.: Menu de boas-vindas",
+    "createBlank": "Criar fluxo em branco",
+    "emptyTitle": "Nenhum fluxo ainda",
+    "emptyHint": "Crie sua primeira conversa: menu de boas-vindas, consulta de pedido ou FAQ. Clientes tocam em botões e o bot direciona para a resposta ou pessoa certa.",
+    "createFirst": "Criar primeiro fluxo",
+    "statuses": {
+      "draft": "Rascunho",
+      "active": "Ativo",
+      "archived": "Arquivado"
+    },
+    "runs": "{count, plural, =1 {1 execução} other {# execuções}}",
+    "triggers": {
+      "keywordNone": "Dispara por palavra-chave (nenhuma definida)",
+      "keywordList": "Dispara por: {keywords}",
+      "firstInbound": "Dispara na primeira mensagem recebida de um contato",
+      "manual": "Disparo manual"
+    }
+  },
+  "agents": {
+    "title": "Agentes de IA",
+    "description": "Seu agente de IA com chave própria: configure, teste no playground e só então use respostas para clientes na caixa de entrada.",
+    "playground": "Playground",
+    "setup": "Configuração"
+  },
+  "settings": {
+    "title": "Configurações",
+    "description": "Tudo em um só lugar: sua conta e seu workspace. Escolha uma seção para gerenciar."
+  }
+}
