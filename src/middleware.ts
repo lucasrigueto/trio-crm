@@ -10,6 +10,11 @@ import {
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
 
+  console.log('[DEBUG middleware]', JSON.stringify({
+    url: process.env.NEXT_PUBLIC_SUPABASE_URL,
+    keyLen: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.length,
+  }))
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
