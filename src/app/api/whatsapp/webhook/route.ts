@@ -174,21 +174,27 @@ export async function POST(request: Request) {
   // Read raw body first so we can HMAC-verify the exact bytes Meta
   // signed. request.json() would re-encode and break the signature.
   const rawBody = await request.text()
-  const signature = request.headers.get('x-hub-signature-256')
 
-  if (!verifyMetaWebhookSignature(rawBody, signature)) {
-    // 401 (not 200) — we want Meta's delivery dashboard to show failures
-    // loudly if a misconfiguration causes signatures to stop matching,
-    // rather than silently eating events.
-    console.warn('[webhook] rejected request with invalid signature')
-    return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
-  }
-
-  let body: { entry?: WhatsAppWebhookEntry[] }
+  let body: { entry?: WhatsAppWebhookEntry[] } | EvolutionWebhookPayload
   try {
     body = JSON.parse(rawBody)
   } catch {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+  }
+
+  // Evolution doesn't sign its webhook calls the way Meta does — it
+  // authenticates itself via the `apikey` field in the payload instead
+  // (checked per-instance in processEvolutionWebhook). Only enforce the
+  // Meta HMAC check for Meta-shaped payloads.
+  if (!isEvolutionWebhookPayload(body)) {
+    const signature = request.headers.get('x-hub-signature-256')
+    if (!verifyMetaWebhookSignature(rawBody, signature)) {
+      // 401 (not 200) — we want Meta's delivery dashboard to show failures
+      // loudly if a misconfiguration causes signatures to stop matching,
+      // rather than silently eating events.
+      console.warn('[webhook] rejected request with invalid signature')
+      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+    }
   }
 
   // Process AFTER the response so we ack Meta within their ~20s timeout
@@ -358,6 +364,23 @@ async function processEvolutionWebhook(payload: EvolutionWebhookPayload) {
   }
 
   const config = configRows[0]
+
+  // Evolution doesn't sign webhook calls — it echoes the instance's own
+  // apikey in the payload instead. Verify it against the stored
+  // (decrypted) key so a leaked webhook URL alone isn't enough to inject
+  // fabricated inbound messages into this account.
+  let storedApiKey: string | null = null
+  try {
+    storedApiKey = config.evolution_api_key ? decrypt(config.evolution_api_key) : null
+  } catch (err) {
+    console.error('[evolution] failed to decrypt stored api key for instance:', instance, err)
+    return
+  }
+  if (!storedApiKey || payload.apikey !== storedApiKey) {
+    console.warn('[evolution] apikey mismatch for instance:', instance, '— dropping payload')
+    return
+  }
+
   const accountId = config.account_id
   const configOwnerUserId = config.user_id
 

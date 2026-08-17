@@ -152,6 +152,8 @@ export async function evolutionSendMedia(
 export interface EvolutionWebhookPayload {
   event: string
   instance: string
+  /** The instance's own API key, echoed back by Evolution on every webhook call. */
+  apikey?: string
   data: {
     key: {
       remoteJid: string
