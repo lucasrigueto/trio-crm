@@ -409,7 +409,6 @@ async function processEvolutionWebhook(payload: EvolutionWebhookPayload) {
     content_text: text || null,
     message_id: data.key.id,
     status: 'delivered',
-    whatsapp_message_id: data.key.id,
   })
 
   if (msgError) {
