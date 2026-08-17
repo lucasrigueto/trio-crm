@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js'
 import { decrypt, encrypt, isLegacyFormat } from '@/lib/whatsapp/encryption'
 import { getMediaUrl, downloadMedia } from '@/lib/whatsapp/meta-api'
 import { normalizePhone } from '@/lib/whatsapp/phone-utils'
-import { isEvolutionWebhookPayload, extractPhoneFromJid, extractMessageText, type EvolutionWebhookPayload } from '@/lib/whatsapp/evolution-api'
+import { isEvolutionWebhookPayload, extractPhoneFromJid, extractMessageText, evolutionFetchInstanceToken, type EvolutionWebhookPayload } from '@/lib/whatsapp/evolution-api'
 import { findExistingContact, isUniqueViolation } from '@/lib/contacts/dedupe'
 import { verifyMetaWebhookSignature } from '@/lib/whatsapp/webhook-signature'
 import { runAutomationsForTrigger } from '@/lib/automations/engine'
@@ -184,7 +184,8 @@ export async function POST(request: Request) {
 
   // Evolution doesn't sign its webhook calls the way Meta does — it
   // authenticates itself via the `apikey` field in the payload instead
-  // (checked per-instance in processEvolutionWebhook). Only enforce the
+  // (checked per-instance in processEvolutionWebhook, against the
+  // instance's own token fetched live from Evolution). Only enforce the
   // Meta HMAC check for Meta-shaped payloads.
   if (!isEvolutionWebhookPayload(body)) {
     const signature = request.headers.get('x-hub-signature-256')
@@ -366,17 +367,30 @@ async function processEvolutionWebhook(payload: EvolutionWebhookPayload) {
   const config = configRows[0]
 
   // Evolution doesn't sign webhook calls — it echoes the instance's own
-  // apikey in the payload instead. Verify it against the stored
-  // (decrypted) key so a leaked webhook URL alone isn't enough to inject
-  // fabricated inbound messages into this account.
-  let storedApiKey: string | null = null
+  // internal token in the payload's `apikey` field instead (confirmed
+  // against Evolution's own delivery logs; this is NOT the account's
+  // global API key). Fetch that token live and compare, so a leaked
+  // webhook URL alone isn't enough to inject fabricated inbound messages.
+  let globalApiKey: string | null = null
   try {
-    storedApiKey = config.evolution_api_key ? decrypt(config.evolution_api_key) : null
+    globalApiKey = config.evolution_api_key ? decrypt(config.evolution_api_key) : null
   } catch (err) {
     console.error('[evolution] failed to decrypt stored api key for instance:', instance, err)
     return
   }
-  if (!storedApiKey || payload.apikey !== storedApiKey) {
+  if (!globalApiKey) {
+    console.warn('[evolution] no api key stored for instance:', instance, '— dropping payload')
+    return
+  }
+
+  let instanceToken: string | null = null
+  try {
+    instanceToken = await evolutionFetchInstanceToken(config.evolution_api_url, globalApiKey, instance)
+  } catch (err) {
+    console.error('[evolution] failed to fetch instance token for verification:', instance, err)
+    return
+  }
+  if (!instanceToken || payload.apikey !== instanceToken) {
     console.warn('[evolution] apikey mismatch for instance:', instance, '— dropping payload')
     return
   }

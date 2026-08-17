@@ -143,6 +143,35 @@ export async function evolutionSendMedia(
   return { messageId: data?.key?.id ?? 'unknown' }
 }
 
+/**
+ * Busca o token interno (Baileys) de uma instância específica.
+ *
+ * Esse token é o valor que a própria Evolution ecoa no campo `apikey` de
+ * todo payload de webhook — diferente da API key global usada para
+ * autenticar chamadas administrativas. Usado pelo webhook handler pra
+ * verificar que a chamada realmente veio da Evolution, sem precisar
+ * armazenar mais nenhum segredo além da API key global já salva.
+ */
+export async function evolutionFetchInstanceToken(
+  apiUrl: string,
+  apiKey: string,
+  instanceName: string
+): Promise<string | null> {
+  const base = apiUrl.replace(/\/$/, '')
+  const res = await fetch(`${base}/instance/fetchInstances`, {
+    method: 'GET',
+    headers: buildHeaders(apiKey),
+  })
+
+  const data = (await handleEvolutionResponse(res, 'fetchInstanceToken')) as Array<{
+    name?: string
+    token?: string
+  }>
+
+  const match = data.find((i) => i.name === instanceName)
+  return match?.token ?? null
+}
+
 // ─── Webhook / Normalização de payload ───────────────────────────────────────
 
 /**
