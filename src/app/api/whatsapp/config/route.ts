@@ -246,22 +246,6 @@ export async function POST(request: Request) {
       evolution_api_url, evolution_api_key, evolution_instance_name,
     } = body
 
-    if (!access_token || !phone_number_id) {
-      return NextResponse.json(
-        { error: 'access_token and phone_number_id are required' },
-        { status: 400 }
-      )
-    }
-
-    if (pin !== undefined && pin !== null && pin !== '') {
-      if (typeof pin !== 'string' || !/^\d{6}$/.test(pin)) {
-        return NextResponse.json(
-          { error: 'PIN must be exactly 6 digits.' },
-          { status: 400 }
-        )
-      }
-    }
-
     // ── Evolution API flow ───────────────────────────────────────
     if (provider === 'evolution') {
       if (!evolution_api_url || !evolution_instance_name) {
@@ -375,6 +359,22 @@ export async function POST(request: Request) {
     }
 
     // ── Meta (WhatsApp Business API) flow continues below ────────
+
+    if (!access_token || !phone_number_id) {
+      return NextResponse.json(
+        { error: 'access_token and phone_number_id are required' },
+        { status: 400 }
+      )
+    }
+
+    if (pin !== undefined && pin !== null && pin !== '') {
+      if (typeof pin !== 'string' || !/^\d{6}$/.test(pin)) {
+        return NextResponse.json(
+          { error: 'PIN must be exactly 6 digits.' },
+          { status: 400 }
+        )
+      }
+    }
 
     // Reject if another account has already claimed this phone_number_id.
     // wacrm is single-tenant-per-WhatsApp-number — letting two accounts
